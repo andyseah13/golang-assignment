@@ -63,7 +63,6 @@ func GetProductById(c *gin.Context) {
 
 	result := db.First(&product, "id = ?", productId)
 	if result.Error != nil {
-		// if it's NOT recordnotfound error, proceed to create product
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			c.IndentedJSON(404, gin.H{
 				"message": "Product not found",
@@ -219,4 +218,25 @@ func CreateOrder(c *gin.Context) {
 	go processOrder(&newOrder, &product)
 
 	c.IndentedJSON(200, newOrder)
+}
+
+func GetOrderById(c *gin.Context) {
+	var order Order
+	orderId := c.Param("id")
+
+	result := db.First(&order, "id = ?", orderId)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			c.IndentedJSON(404, gin.H{
+				"message": "Order not found",
+			})
+			return
+		} else {
+			c.IndentedJSON(500, gin.H{
+				"message": result.Error,
+			})
+			return
+		}
+	}
+	c.IndentedJSON(200, order)
 }
