@@ -9,6 +9,10 @@ import (
 	"gorm.io/gorm"
 )
 
+/*********************
+  PRODUCT FUNCTIONS
+**********************/
+
 func CreateProduct(c *gin.Context) {
 	var latestProduct Product
 	var newProduct Product
@@ -19,7 +23,6 @@ func CreateProduct(c *gin.Context) {
 		})
 		return
 	}
-
 	result := db.Last(&latestProduct)
 	prodId := "PROD00001"
 	hasRecord := true
@@ -49,6 +52,48 @@ func CreateProduct(c *gin.Context) {
 	db.Save(&newProduct)
 	c.JSON(200, newProduct)
 }
+
+func GetProductById(c *gin.Context) {
+	var product Product
+	productId := c.Param("id")
+
+	result := db.First(&product, "id = ?", productId)
+	if result.Error != nil {
+		// if it's NOT recordnotfound error, proceed to create product
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			c.JSON(404, gin.H{
+				"message": "Product not found",
+			})
+			return
+		} else {
+			c.JSON(500, gin.H{
+				"message": result.Error,
+			})
+			return
+		}
+	}
+	c.JSON(200, product)
+}
+
+func GetAllProducts(c *gin.Context) {
+	var products []Product
+	result := db.Find(&products)
+	if result.Error != nil {
+		c.JSON(500, gin.H{
+			"message": result.Error,
+		})
+		return
+	}
+	productListResponse := ProductListResponse{
+		Products: products,
+	}
+
+	c.JSON(200, productListResponse)
+}
+
+/*********************
+  ORDER FUNCTIONS
+**********************/
 
 func CreateOrder(c *gin.Context) {
 	var orders []Order
