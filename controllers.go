@@ -18,7 +18,7 @@ func CreateProduct(c *gin.Context) {
 	var newProduct Product
 	err := c.BindJSON(&newProduct)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.IndentedJSON(400, gin.H{
 			"message": err,
 		})
 		return
@@ -31,7 +31,7 @@ func CreateProduct(c *gin.Context) {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			hasRecord = false
 		} else {
-			c.JSON(500, gin.H{
+			c.IndentedJSON(500, gin.H{
 				"message": result.Error,
 			})
 			return
@@ -42,7 +42,7 @@ func CreateProduct(c *gin.Context) {
 		latestId := latestProduct.Id
 		latestCount, err := strconv.Atoi(latestId[len(latestId)-5:])
 		if err != nil {
-			c.JSON(500, gin.H{
+			c.IndentedJSON(500, gin.H{
 				"message": err,
 			})
 		}
@@ -50,7 +50,7 @@ func CreateProduct(c *gin.Context) {
 	}
 	newProduct.Id = prodId
 	db.Save(&newProduct)
-	c.JSON(200, newProduct)
+	c.IndentedJSON(200, newProduct)
 }
 
 func GetProductById(c *gin.Context) {
@@ -61,25 +61,25 @@ func GetProductById(c *gin.Context) {
 	if result.Error != nil {
 		// if it's NOT recordnotfound error, proceed to create product
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			c.JSON(404, gin.H{
+			c.IndentedJSON(404, gin.H{
 				"message": "Product not found",
 			})
 			return
 		} else {
-			c.JSON(500, gin.H{
+			c.IndentedJSON(500, gin.H{
 				"message": result.Error,
 			})
 			return
 		}
 	}
-	c.JSON(200, product)
+	c.IndentedJSON(200, product)
 }
 
 func GetAllProducts(c *gin.Context) {
 	var products []Product
 	result := db.Find(&products)
 	if result.Error != nil {
-		c.JSON(500, gin.H{
+		c.IndentedJSON(500, gin.H{
 			"message": result.Error,
 		})
 		return
@@ -88,7 +88,41 @@ func GetAllProducts(c *gin.Context) {
 		Products: products,
 	}
 
-	c.JSON(200, productListResponse)
+	c.IndentedJSON(200, productListResponse)
+}
+
+func UpdateProduct(c *gin.Context) {
+	// get product to update
+	var product Product
+	productId := c.Param("id")
+	result := db.First(&product, "id = ?", productId)
+	if result.Error != nil {
+		// if it's NOT recordnotfound error, proceed to create product
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			c.IndentedJSON(404, gin.H{
+				"message": "Product not found",
+			})
+			return
+		} else {
+			c.IndentedJSON(500, gin.H{
+				"message": result.Error,
+			})
+			return
+		}
+	}
+
+	// bind fields to be updated to product object
+	var inputProduct Product
+	err := c.BindJSON(&inputProduct)
+	if err != nil {
+		c.IndentedJSON(400, gin.H{
+			"message": err,
+		})
+		return
+	}
+
+	db.Model(&product).Updates(inputProduct)
+	c.IndentedJSON(200, product)
 }
 
 /*********************
@@ -102,7 +136,7 @@ func CreateOrder(c *gin.Context) {
 	err := c.BindJSON(&newOrder)
 
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.IndentedJSON(400, gin.H{
 			"message": err,
 		})
 		return
@@ -120,5 +154,5 @@ func CreateOrder(c *gin.Context) {
 	// newOrder.ProductName = product.Name
 
 	db.Save(&newOrder)
-	c.JSON(200, newOrder)
+	c.IndentedJSON(200, newOrder)
 }

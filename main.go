@@ -14,6 +14,7 @@ func main() {
 	r.POST("/product", CreateProduct)
 	r.GET("/product/:id", GetProductById)
 	r.GET("/products", GetAllProducts)
+	r.PATCH("/product/:id", UpdateProduct)
 	r.POST("/order", CreateOrder)
 	r.Run()
 }

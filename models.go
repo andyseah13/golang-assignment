@@ -15,14 +15,14 @@ import (
 *********************
 */
 type Product struct {
-	Id       string  `gorm:"primary_key" json:"id"`
+	Id       string  `gorm:"primary_key;<-:false" json:"id"`
 	Name     string  `json:"product_name"`
 	Price    float64 `json:"price" json:"type:decimal(10,2)"`
 	Quantity int     `json:"quantity"`
 }
 
 type Order struct {
-	Id         string `gorm:"primary_key" json:"id"`
+	Id         string `gorm:"primary_key;<-:false" json:"id"`
 	CustomerId string `json:"customer_id" `
 	ProductId  string `json:"product_id"`
 	Quantity   int    `json:"quantity"`
