@@ -217,7 +217,7 @@ func CreateOrder(c *gin.Context) {
 	// process order in the background
 	go processOrder(&newOrder, &product)
 
-	c.IndentedJSON(200, newOrder)
+	c.IndentedJSON(200, newOrder.GetResponse())
 }
 
 func GetOrderById(c *gin.Context) {
@@ -238,5 +238,5 @@ func GetOrderById(c *gin.Context) {
 			return
 		}
 	}
-	c.IndentedJSON(200, order)
+	c.IndentedJSON(200, order.GetResponse())
 }

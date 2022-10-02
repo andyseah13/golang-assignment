@@ -45,6 +45,13 @@ type ProductListResponse struct {
 	Products []Product `json:"products"`
 }
 
+type NewOrderResponse struct {
+	Id        string `gorm:"primary_key;->;<-:create" json:"id"` // prevent update on id
+	ProductId string `json:"product_id"`
+	Quantity  int    `json:"quantity"`
+	Status    string `json:"status"`
+}
+
 var db *gorm.DB
 
 func getDatabaseConnection() {
@@ -54,4 +61,14 @@ func getDatabaseConnection() {
 		fmt.Println("Database connection error: ", err)
 	}
 	db = conn
+}
+
+// Convert order object into response object that we want
+func (o *Order) GetResponse() NewOrderResponse {
+	return NewOrderResponse{
+		Id:        o.Id,
+		ProductId: o.ProductId,
+		Quantity:  o.Quantity,
+		Status:    o.Status,
+	}
 }
