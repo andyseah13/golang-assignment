@@ -15,18 +15,18 @@ import (
 *********************
 */
 type Product struct {
-	Id       string  `gorm:"primary_key;<-:false" json:"id"`
+	Id       string  `gorm:"primary_key;->;<-:create" json:"id"` // prevent update on id
 	Name     string  `json:"product_name"`
 	Price    float64 `json:"price" json:"type:decimal(10,2)"`
 	Quantity int     `json:"quantity"`
 }
 
 type Order struct {
-	Id         string `gorm:"primary_key;<-:false" json:"id"`
+	Id         string `gorm:"primary_key;->;<-:create" json:"id"` // prevent update on id
 	CustomerId string `json:"customer_id" `
 	ProductId  string `json:"product_id"`
 	Quantity   int    `json:"quantity"`
-	Status     string `json:"status "`
+	Status     string `json:"status"`
 }
 
 /*
@@ -36,6 +36,11 @@ type Order struct {
 
 *********************
 */
+type NewProductResponse struct {
+	Product
+	Message string `json:"message"`
+}
+
 type ProductListResponse struct {
 	Products []Product `json:"products"`
 }

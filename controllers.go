@@ -50,7 +50,11 @@ func CreateProduct(c *gin.Context) {
 	}
 	newProduct.Id = prodId
 	db.Save(&newProduct)
-	c.IndentedJSON(200, newProduct)
+	productResponse := NewProductResponse{
+		Product: newProduct,
+		Message: "Product successfully added",
+	}
+	c.IndentedJSON(200, productResponse)
 }
 
 func GetProductById(c *gin.Context) {
