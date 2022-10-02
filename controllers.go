@@ -125,7 +125,13 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	db.Model(&product).Updates(inputProduct)
+	err = db.Model(&product).Updates(inputProduct).Error
+	if err != nil {
+		c.IndentedJSON(500, gin.H{
+			"message": "Unable to update product",
+		})
+		return
+	}
 	c.IndentedJSON(200, product)
 }
 
@@ -133,8 +139,27 @@ func UpdateProduct(c *gin.Context) {
   ORDER FUNCTIONS
 **********************/
 
+func processOrder(order *Order, product *Product) {
+	orderQty := order.Quantity
+	productQty := product.Quantity
+	diff := productQty - orderQty
+
+	// update order to failed if product has not enough quantity
+	if diff < 0 {
+		order.Status = "failed"
+		db.Save(&order)
+		return
+	}
+
+	// update product quantity and order status if processed successfully
+	product.Quantity = diff
+	db.Save(&product)
+	order.Status = "processed"
+	db.Save(&order)
+}
+
 func CreateOrder(c *gin.Context) {
-	var orders []Order
+	var latestOrder Order
 	var product Product
 	var newOrder Order
 	err := c.BindJSON(&newOrder)
@@ -146,17 +171,52 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
+	// check if product exists
+	err = db.First(&product, "id = ?", newOrder.ProductId).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.IndentedJSON(400, gin.H{
+				"message": "Product not found",
+			})
+			return
+		} else {
+			c.IndentedJSON(500, gin.H{
+				"message": err,
+			})
+			return
+		}
+	}
+
 	// assign order ID
-	result := db.Find(&orders)
-	count := result.RowsAffected
-	orderId := "ORD" + fmt.Sprintf("%05d", count)
+	result := db.Last(&latestOrder)
+	orderId := "ORD00001"
+	hasRecord := true
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			hasRecord = false
+		} else {
+			c.IndentedJSON(500, gin.H{
+				"message": result.Error,
+			})
+			return
+		}
+	}
+	if hasRecord {
+		latestId := latestOrder.Id
+		latestCount, err := strconv.Atoi(latestId[len(latestId)-5:])
+		if err != nil {
+			c.IndentedJSON(500, gin.H{
+				"message": err,
+			})
+		}
+		orderId = "ORD" + fmt.Sprintf("%05d", latestCount+1)
+	}
 	newOrder.Id = orderId
-
-	// get product name
-	db.First(&product, "id = ?", newOrder.ProductId)
 	newOrder.Status = "order placed"
-	// newOrder.ProductName = product.Name
-
 	db.Save(&newOrder)
+
+	// process order in the background
+	go processOrder(&newOrder, &product)
+
 	c.IndentedJSON(200, newOrder)
 }
